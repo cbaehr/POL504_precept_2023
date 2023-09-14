@@ -1,0 +1,63 @@
+---
+title: "Homework XXX - Text as Data"
+author: "Your Name"
+date: "XXXX 2023"
+geometry: "top=1in, bottom=1in, left=1in, right=1in"
+fig_caption: yes
+header-includes:
+   - \usepackage{tabularx,booktabs}
+   - \usepackage{caption}
+   - \usepackage{longtable}
+   - \usepackage{array}
+   - \usepackage{multirow}
+   - \usepackage{lscape}
+#   - \usepackage{pdflscape}
+   - \usepackage{dcolumn}
+   - \usepackage{graphicx}
+   - \usepackage{placeins} 
+   - \usepackage{multirow}
+#   - \usepackage{setspace}
+   - \usepackage{float}
+   - \floatplacement{figure}{H}
+   - \usepackage{hyperref}
+   - \usepackage{cleveref}
+   - \usepackage{bbm}
+   - \usepackage{amsmath}
+output: pdf_document
+editor_options: 
+  chunk_output_type: inline
+---
+
+\setlength\extrarowheight{4pt}
+
+# Question 1.
+
+
+```{r prelim, include=FALSE, message=FALSE, results='hide'}
+rm(list=ls())
+pacman::p_load(quanteda,
+               quanteda.corpora,
+               quanteda.textstats,
+               dplyr,
+               ggplot2,
+               stringr)
+
+```
+
+
+You can simply type your answer outside of code chunks. 
+
+```{r datawrangle}
+
+2 + 2
+
+```
+
+# Question 2.
+
+# Question 3.
+
+
+```{r outputtable, results='asis'}
+
+```

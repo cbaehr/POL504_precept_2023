@@ -1,1 +1,1 @@
-# POL504_precept_2023
+Welcome to the precept page for POL 504. Each weekly script will be published prior to the precept, I recommend you download and follow along on your own machine. You can access all data in the data folder. The misc folder contains auxiliary information that may be useful: rmarkdown templates, etc.
