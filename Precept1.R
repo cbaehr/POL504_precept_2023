@@ -84,8 +84,8 @@ help(seq) # helpful!
 
 ## best to specify function inputs explicitly. Otherwise R just interprets them
 ## in terms of function order
-onetotwenty_by2 <- seq(from = 1, to = 20, by = 2)
-
+onetotwenty_by2 <- seq(from = 1, by = 2, to = 20)
+#seq(1, 2, 20)
 sum(seq(1, 20)) # nested functions
 
 
@@ -178,8 +178,8 @@ grepl("play", mycleanwords) # boolean
 ## the term to process texts and conduct analysis. I will get you started but
 ## you should familiarize yourself: https://quanteda.io/articles/quickstart.html
 
-install.packages("quanteda")
-install.packages("readtext")
+#install.packages("quanteda")
+#install.packages("readtext")
 library(quanteda)
 library(readtext)
 
@@ -189,7 +189,7 @@ setwd("/Users/christianbaehr/Documents/GitHub/POL504_precept_2023/")
 
 
 reviews.raw <- readtext("data/reviews.csv")
-reviews <- corpus(reviews.raw) # make text variable into a "corpus"
+reviews <- corpus(reviews.raw$review) # make text variable into a "corpus"
 
 ## we can easily add metadata
 docvars(reviews, "text") <- reviews.raw$text
@@ -223,8 +223,8 @@ reviews.pos.cleantokens <- tokens(reviews.pos,
                                   remove_numbers = T,
                                   remove_url = T,
                                   remove_separators = T) |>
-  tokens_remove(stopwords("en")) #|>
-  #tokens_remove("br")
+  tokens_remove(stopwords("en")) |>
+  tokens_remove("br")
 
 reviews.pos.cleandfm <- dfm(reviews.pos.cleantokens)
 
