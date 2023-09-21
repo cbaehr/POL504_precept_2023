@@ -28,9 +28,8 @@ setwd("/Users/christianbaehr/Documents/GitHub/POL504_precept_2023/")
 
 ## use pacman instead of loading individual libraries
 pacman::p_load(ggplot2, 
-               preText, 
-               quanteda.textplots,
-               quanteda.textstats,
+               preText,
+               quanteda,
                readtext)
 
 
