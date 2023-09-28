@@ -18,6 +18,7 @@
 setwd("/Users/christianbaehr/Documents/GitHub/POL504_precept_2023/")
 
 ## load packages
+#devtools::install_github("quanteda/quanteda.corpora")
 pacman::p_load(dplyr, ggplot2, gutenbergr, preText, quanteda, quanteda.corpora, 
                quanteda.textplots, quanteda.textstats, readtext)
 
@@ -147,6 +148,14 @@ textstat_simil(reviews.3, method = c("cosine")) # what do higher values mean?
 ## Hint: can retrieve the entire row for the 24th document in the matrix
 as.matrix(reviews.dfm)[24,]
 
+m1 <- as.matrix(reviews.dfm)[c(24), ]
+m2 <- as.matrix(reviews.dfm)[25, ]
+
+dist <- sqrt( sum( (m1-m2)^2 ) )
+dist
+
+textstat_dist(reviews.3, method = c("euclidean")) # what do higher values mean?
+
 
 #######################################
 
@@ -213,7 +222,7 @@ boot.fre <- function(party) { # accepts df of texts (party-specific)
   n <- nrow(party) # number of texts
   docnums <- sample(1:n, size=n, replace=T) # sample texts WITH replacement
   docs.boot <- party[docnums, "text"]
-  docnames(docs.boot) <- 1:length(docs.boot) 
+  docnames(docs.boot) <- 1:length(docs.boot) # something you have to do
   fre <- textstat_readability(docs.boot, measure = "Flesch") # compute FRE for each
   return(mean(fre[,"Flesch"])) # return flesch scores only
 }
