@@ -23,7 +23,8 @@ setwd("/Users/christianbaehr/Documents/GitHub/POL504_precept_2023/")
 ## 1.2) package management
 
 ## only do these once
-#install.packages("pacman") 
+#install.packages("pacman")
+#install.packages("devtools")
 #devtools::install_github("matthewjdenny/preText")
 
 ## use pacman instead of loading individual libraries
@@ -97,13 +98,20 @@ topfeatures(reviews.dfm_weighted[nrow(reviews.dfm_weighted),]) # why is ordering
 
 ## 1.4) IN CLASS ACTIVITY
 
-## Working in pairs, compute the difference-in-means for the NUMBER OF TIMES
+## Working in pairs, compute the difference-in-means for the RATE AT WHICH
 ## the term "bad" occurs in positive reviews versus negative reviews
 
 ## Hint: retrieve non-zero entries for a single dfm feature column
 feature <- dfm_select(reviews.dfm, pattern = "love") # subset dfm to single feature
 occurrences <- feature@x # extract the non-zero rows for "love"
 
+pos <- dfm_subset(reviews.dfm, subset = sentiment==1)
+neg <- dfm_subset(reviews.dfm, subset = sentiment==0)
+
+pos.col <- dfm_select(pos, pattern = "bad")
+neg.col <- dfm_select(neg, pattern = "bad")
+
+sum(pos.col) / dim(pos.col)[1] - sum(neg.col) / dim(neg.col)[1]
 
 #######################################
 
