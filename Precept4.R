@@ -119,11 +119,14 @@ pred$log_probs # log probabilities of authorship
 ## 1) extracting elements from a vector that match a pattern
 ## 2) identify text in a strong that matches a pattern
 
+## 1)
 grep("c", c("Get", "to", "da", "choppa!"), value=T) # return matching elements
 
+## 2)
 string <- "Its October fifth 2023, and the weather is sunny and 72 degrees." # string
 matches <- gregexpr("\\d{2,4}", string) # match positions
 regmatches(string, matches) # text
+
 
 ## lets focus on the first task
 words <- c("Washington Post", "NYT", "Wall Street Journal", "Peer-2-Peer", "Red State", "Cheese", "222", ",")
@@ -231,20 +234,22 @@ plot(manifestos$year,
 harvard <- SentimentAnalysis::DictionaryGI |>
   dictionary()
 
+## run SOTU speeches thru the Harvard dictionary
 sotu <- data_corpus_sotu |>
   tokens() |>
   dfm() |>
   dfm_lookup(harvard)
 
-
+## what are the dimensions?
 featnames(sotu)
+
 
 year <- docvars(data_corpus_sotu)["Date"][,1] |>
   as.character() |>
   substr(1, 4) |>
   as.numeric()
 
-## net positivity of SOTU speeches over time
+## plot net positivity of SOTU speeches over time
 plot(year, 
      sotu[,"positive"] - sotu[,"negative"],
      xlab="Year", ylab="Net Positivity", type="b", pch=19)
