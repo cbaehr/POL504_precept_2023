@@ -101,7 +101,7 @@ head(stylest_term_influence(mod.fit,
 ## process a Pride and Prejudice excerpt to predict author
 
 pred.text <- pride$text[pride$text!=""] %>% # omit empty excepts
-  .[sample(1:length(.), 100)] %>% # randomly select 100
+  .[sample(1:length(.), 1000)] %>% # randomly select 100
   paste(collapse = " ") # collapse to single string
 
 
@@ -123,7 +123,7 @@ pred$log_probs # log probabilities of authorship
 grep("c", c("Get", "to", "da", "choppa!"), value=T) # return matching elements
 
 ## 2)
-string <- "Its October fifth 2023, and the weather is sunny and 72 degrees." # string
+string <- "Its October 5th 2023, and the weather is sunny and 72 degrees." # string
 matches <- gregexpr("\\d{2,4}", string) # match positions
 regmatches(string, matches) # text
 
@@ -131,8 +131,8 @@ regmatches(string, matches) # text
 ## lets focus on the first task
 words <- c("Washington Post", "NYT", "Wall Street Journal", "Peer-2-Peer", "Red State", "Cheese", "222", ",")
 
-grep("\\w", words, value = T) # any words
-grep("\\w{7}", words, value = T) # at LEAST seven words
+grep("\\w", words, value = T) # any alphanumeric
+grep("\\w{7}", words, value = T) # at LEAST seven alphanumeric characters
 grep("\\d", words, value = T) # any numbers
 grep("\\W", words, value = T) # any NON-word characters
 
@@ -158,7 +158,7 @@ gsub("(\\w+)-(\\d{2})", "\\1-19\\2", presidents)
 ## We want to indicate that the pattern should come at the end of the word, to 
 ## avoid the mismatch in Obama-192003
 
-### HOW CAN WE DO THIS? ###
+gsub("(\\w+)-(\\d{2})$", "\\1-19\\2", presidents) 
 
 
 ## 2.3) lookaheads and lookbehinds
@@ -175,6 +175,7 @@ str_view_all(tolower(x), "(?<!united )states") # negative lookbehind
 
 ## Working in pairs, produce a regular expression to extract YEARS from the novels_excerpts
 ## texts.
+
 
 
 
@@ -242,7 +243,6 @@ sotu <- data_corpus_sotu |>
 
 ## what are the dimensions?
 featnames(sotu)
-
 
 year <- docvars(data_corpus_sotu)["Date"][,1] |>
   as.character() |>
