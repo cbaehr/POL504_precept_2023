@@ -49,6 +49,16 @@ news_corpus <- news_data |>
 
 ## Hint: P(B|A) ~ P(A|B) * P(B)
 
+arts <- corpus_subset(news_corpus, category == "ARTS") |>
+  tokens() |>
+  dfm()
+
+P_A__B <- sum(dfm_select(arts, "artist")) / sum(ntoken(arts))
+
+P_B <- nrow(arts) / length(news_corpus)
+
+P_B * P_A__B
+
 
 #######################################
 
@@ -137,7 +147,7 @@ cat(
 )
 
 
-## 3) Wordsore Model
+## 3) Wordscore Model
 
 
 ## lets use the text from Conservative and Labour party manifestos in the UK
@@ -180,7 +190,7 @@ test.dfm <- test.set |>
   dfm_remove(stopwords("en"))
 
 ## Step 3: project the dependent variable to a numeric scale
-outcome <- (2 * (train.set$party == "Lab")) - 1 
+outcome <- (2 * (train.set$party == "Lab")) - 1
 
 ## Y variable must be coded on a binary x in {-1,1} scale, so -1 = Conservative and 1 = Labour
 
@@ -202,7 +212,7 @@ ws_base$wordscores[c("drug", "minor", "unemploy")]
 ## Step 5: predict values for test set speeches
 test.set$party
 (pred_ws <- predict(ws_base, newdata = test.dfm,
-                    rescaling = "none", level = 0.95, se.fit = T)) 
+                    rescaling = "none", level = 0.95, se.fit = T))
 
 ## plot the predicted values for the test texts
 textplot_scale1d(pred_ws)

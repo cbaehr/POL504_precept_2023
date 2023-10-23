@@ -1,0 +1,574 @@
+---
+title: "HW1 Answer Key"
+author: "Christian Baehr"
+date: "10/18/2023"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load in required packages.
+```{r echo = TRUE}
+rm(list=ls())
+pacman::p_load(quanteda, quanteda.corpora, quanteda.textstats, dplyr, ggplot2, 
+               readtext, stringr, sotu, gutenbergr, stylest, text.alignment)
+```
+
+## Question 1
+
+```{r}
+## merge the meta and text dataframes from the sotu package
+sotu <- cbind(sotu_meta, sotu_text)
+
+## subset to just speeches between 2007 and 2010
+sotu <- sotu[which(sotu$year %in% 2007:2010), ]
+
+## convert to corpus, with "sotu_text" as the variable with text data
+sotu.corpus <- corpus(sotu, text_field = "sotu_text")
+
+## tokenize the speeches (no pre processing yet)
+sotu.tokens <- tokens(sotu.corpus)
+
+```
+
+### 1a)
+```{r}
+## function to compute TTR
+##
+## @param x tokenized quanteda corpus
+calculate_TTR <- function(x){
+  ntype(x)/lengths(x)
+}
+calculate_TTR(sotu.tokens)
+
+
+## function to compute Guiraud's index of lexical richness
+##
+## @param x tokenized quanteda corpus
+calculate_G <- function(x){
+  ntype(x)/sqrt(lengths(x))
+}
+calculate_G(sotu.tokens)
+```
+
+### 1b)
+```{r}
+## create dfm of the SOTU speeches
+sotu.dfm <- tokens(sotu.corpus, remove_punct = T) |>
+  dfm(tolower=F)
+textstat_simil(sotu.dfm, margin = "documents", method = "cosine")
+```
+
+## Question 2
+
+### 2a) Calculating TTR & Similarity w/ Stemming
+```{r}
+## Processing
+sotu.tokens <- tokens(sotu.corpus, remove_punct = TRUE) |>
+  tokens_wordstem()
+
+## TTR
+ttr <- calculate_TTR(sotu.tokens) %>% setNames(c("Bush-07", "Bush-08", "Obama-09", "Obama-10"))
+r <- calculate_G(sotu.tokens) %>% setNames(c("Bush-07", "Bush-08", "Obama-09", "Obama-10"))
+
+## Similarity
+rr_dfm <- dfm(sotu.tokens, tolower = FALSE)
+sim <- textstat_simil(sotu.dfm, margin = "documents", method = "cosine")
+
+## print results
+cat("TTR scores w. stemming: \n", ttr, "\n\n")
+cat("G scores w. stemming: \n", r, "\n\n")
+cat("Cosine similarity w. stemming: \n"); prmatrix(as.matrix(sim))
+```
+
+
+### 2b) Calculating TTR & Similarity w/o Stopwords 
+```{r}
+## Processing
+sotu.tokens <- tokens(sotu.corpus, remove_punct = TRUE) |>
+  tokens_remove(stopwords("english"))
+
+## TTR
+ttr <- calculate_TTR(sotu.tokens)
+r <- calculate_G(sotu.tokens) %>% setNames(c("Bush-07", "Bush-08", "Obama-09", "Obama-10"))
+
+## Similarity
+sotu.dfm <- dfm(sotu.tokens, tolower = FALSE)
+sim <- textstat_simil(sotu.dfm, margin = "documents", method = "cosine")
+
+## print results
+cat("TTR scores w/o stopwords: \n", ttr, "\n\n")
+cat("G scores w/o stopwords: \n", r, "\n\n")
+cat("Cosine similarity w/o stopwords: \n"); prmatrix(as.matrix(sim))
+```
+
+
+### 2c) Calculating TTR & Similarity w/ all lowercase 
+```{r}
+## Processing
+sotu.tokens <- tokens(sotu.corpus, remove_punct = TRUE) |>
+  tokens_tolower()
+
+## TTR
+ttr <- calculate_TTR(sotu.tokens)
+r <- calculate_G(sotu.tokens) 
+
+## Similarity
+sotu.dfm <- dfm(sotu.tokens)
+sim <- textstat_simil(sotu.dfm, margin = "documents", method = "cosine")
+
+# print results
+cat("TTR scores w. lowercase: \n", ttr, "\n\n")
+cat("G scores w. lowercase: \n", r, "\n\n")
+cat("Cosine similarity w. lowercases: \n"); prmatrix(as.matrix(sim))
+```
+
+### 2d) TF-IDF
+These are the results below, but we might hesitate to use TF-IDF when we have very few documents in the corpus.
+```{r}
+sotu.dfm.tfidf <- tokens(sotu.corpus, remove_punct = T) %>% 
+  dfm() %>% 
+  dfm_tfidf()
+textstat_simil(sotu.dfm.tfidf, margin = "documents", method = "cosine")
+```
+
+## Question 3
+
+### 3a)
+```{r}
+## file names
+files <- c("wealth_of_nations.txt", "theory_of_moral_sentiments.txt")
+
+## read each text as a corpus object
+smith <- readtext(files) |>
+  corpus()
+
+## docvar with titles
+smith$title <- c("wealth of nations", "theory of moral sentiments")
+```
+
+### 3b) 
+```{r}
+## lowercase and remove hyphens
+smith <- tolower(smith)
+smith <- gsub("-", " ", smith)
+
+## remove symbols/punctuation/numbers/stopwords
+smith.tok <- tokens(smith, remove_symbols = T, remove_punct = T, remove_numbers = T) |>
+  tokens_remove(stopwords())
+```
+
+### 3c)
+```{r}
+## use tfidf weighting with numerator the proportion of 
+## document tokens of that type
+smith.dfm <- dfm(smith.tok) |>
+  dfm_tfidf(scheme_tf = "prop", base = exp(1))
+
+topfeatures(smith.dfm[2,]) # pretty close!
+```
+
+## Question 4
+
+```{r}
+sentence1 <- "Biden Administration Loses Expensive Aircraft Because Pilot Scared of Bad Weather"
+
+sentence2 <- "U.S. Marine Pilot Ejects From F-35 Aircraft Following Mishap in South Carolina"
+
+## remove punctuation and tokenize
+sentences.tokens <- corpus(c(sentence1, sentence2)) |>
+  tokens(remove_punct = T)
+
+sentences.dfm <- dfm(sentences.tokens, tolower = T) 
+
+s1 <- as.matrix(sentences.dfm)[1,] # feature vector for sentence1
+s2 <- as.matrix(sentences.dfm)[2,] # feature vector for sentence2
+
+## Euclidean distance
+euclidean <- sqrt( sum( ( s1-s2 )^2 ) )
+
+## Manhattan distance
+manhattan <- sum( abs( s1-s2 ) )
+
+## Jaccard distance
+num <- length( intersect(sentences.tokens[[1]], sentences.tokens[[2]]) )
+denom <- length( union(sentences.tokens[[1]],sentences.tokens[[2]]) )
+jaccard <- num / denom
+
+## Cosine similarity
+cosine <- sum(s1 * s2) /( sqrt(sum(s1^2)) * sqrt(sum(s2^2)) )
+
+## Levenshtein distance for surveyance and surveillance
+levenshtein <- adist("surveyance", "surveillance")
+
+## print
+cat("Euclidean distance:", euclidean, "\n\n",
+    "Manhattan distance:", manhattan, "\n\n",
+    "Jaccard similarity:", jaccard, "\n\n",
+    "Cosine similarity:", cosine, "\n\n",
+    "Levenshtein distance:", levenshtein)
+```
+
+## Question 5
+
+### 5a-b) Prepare Data 
+```{r message = F}
+## list of authors
+author_list <- c("Fitzgerald, F. Scott (Francis Scott)", "Melville, Herman", 
+                 "Austen, Jane", "Dickens, Charles")
+
+## Prepare data function
+##
+## @param author_name: author's name as it would appear in gutenbergr
+## @param num_texts: numeric specifying number of texts to select
+## @param num_lines: num_lines specifying number of sentences to sample
+prepare.dt <- function(author_name, num_texts, num_lines, removePunct = TRUE){
+  meta <- gutenberg_works(author == author_name) %>% slice(1:num_texts)
+  meta <- meta %>% mutate(author = unlist(str_split(author, ","))[1] %>% tolower(.))
+  texts <- lapply(meta$gutenberg_id, function(x) gutenberg_download(x) %>% 
+                    select(text) %>% 
+                    sample_n(num_lines) %>% 
+                    unlist() %>% 
+                    paste(., collapse = " ") %>% 
+                    str_squish(.) %>% 
+                    str_trim(., side = "both")) # remove white space
+  texts <- lapply(texts, function(x) gsub("`|'", "", x)) # remove apostrophes
+  if(removePunct) texts <- lapply(texts, function(x) gsub("[^[:alpha:]]", " ", x)) 
+  # remove all non-alpha characters
+  output <- tibble(title = meta$title, author = meta$author, 
+                   text = unlist(texts, recursive = FALSE)) 
+}
+
+## run function
+set.seed(0123)
+texts.dt <- lapply(author_list, prepare.dt, num_texts = 4, num_lines = 500, removePunct = F)
+texts.dt <- do.call(rbind, texts.dt)
+```
+
+### 5c) Select Features 
+```{r}
+filter <- corpus::text_filter(drop_punct = T, drop_number = T)
+set.seed(0123)  # remember to set seed for replicability
+vocab <- stylest_select_vocab(texts.dt$text, texts.dt$author,
+                              nfold = 5,
+                              smooth = 1,
+                              filter = filter,
+                              cutoff_pcts = c(25, 50, 60, 70, 75, 80, 90, 99))
+
+## percentile with best prediction rate
+vocab$cutoff_pct_best
+
+## rate of INCORRECTLY predicted speakers of held-out texts
+vocab$miss_pct
+
+## average misspecification across hold-out sample by percentiles
+misspct <- apply(vocab$miss_pct, 2, mean) 
+names(misspct) <- c("pct25", "pct50", "pct60", "pct70", "pct75", "pct80", "pct90", "pct99")
+
+print(misspct)
+```
+
+### 5d) Prune Features and Fit Model
+```{r}
+## apply threshold to prunce features
+prune.vocab <- stylest_terms(texts.dt$text, 
+                             texts.dt$author, 
+                             vocab$cutoff_pct_best,
+                             filter = filter)
+
+## Fit model
+style.model <- stylest_fit(texts.dt$text, texts.dt$author, terms = prune.vocab,
+                           filter = filter)
+
+## explore fit
+authors <- unique(texts.dt$author)
+term_usage <- style.model$rate
+
+## all "stopwords" (high frequency words)
+lapply(authors, function(x) head(term_usage[x,][order(-term_usage[x,])])) %>% setNames(authors)  
+```
+
+### 5e) Ratio of Rate Vectors
+```{r}
+## take ratios
+ratio <- term_usage["austen",]/term_usage["dickens",]
+head(ratio[order(-ratio)])  # more specific to each author
+head(ratio[order(ratio)]) # less specific to each author
+```
+
+### 5f) Mystery Author
+```{r}
+load("mystery_excerpt.rds")
+
+## use fitted model to predict author
+pred <- stylest_predict(style.model, mystery_excerpt)
+pred$predicted
+pred$log_probs
+
+```
+
+## Question 6
+
+### 6a) Contingency table for UK Manifestos
+```{r}
+## get text from UK political manifestos speeches
+corpus <- corpus_subset(data_corpus_ukmanifestos, Year %in% c(1945:1955))
+text <- tokens(corpus, remove_punct = T) |>
+  paste(collapse = " ") |>
+  tolower()
+  
+## get entry of contingency table for the collocation
+o11 <- str_count(text, "united(?= kingdom)")
+o12 <- str_count(text, "united(?! kingdom)")
+o21 <- str_count(text, "(?<!united )kingdom")
+N <- tokens(text) |>
+  tokens_ngrams(n = 2) |>
+  ntoken() |>
+  unname()
+o22 <- N - o21 - o11 - o12
+
+## contingency table
+out <- matrix(c(o11, o12, o21, o22),
+                 ncol = 2,
+                 byrow = T)
+rownames(out) <- c("United", "Not United")
+colnames(out) <- c("Kingdom", "Not Kingdom")
+print(out)
+
+## expected frequency
+E11 <- (o11+o12)/N * (o11 + o21)/N * N
+# N12 <- N - (o11 + o21)
+# E21 <- (o11+o21)/N * N21/N * N
+# E12 <- (o11+o12)/N * N12/N * N
+# E22 <- N12/N * N21/N * N
+
+## get Chi-square value
+## (o11-E11)^2/E11 + (o21-E21)^2/E21 + (o12-E12)^2/E12 + (o22-E22)^2/E22
+
+## print
+cat("Observed frequency:", o11, "\n\n",
+    "Expected frequency:", E11)
+```
+
+### 6b) Collocation for "United Kingdom" using quanteda
+```{r}
+textstat_collocations(corpus, min_count = 5) %>% 
+  data.frame() %>%
+  select(c("collocation", "lambda", "z")) %>% 
+  filter(collocation == "united kingdom") 
+```
+
+### 6c) Collocations using quanteda
+```{r}
+(collout1 <- textstat_collocations(corpus, min_count = 5) |>
+   arrange(-lambda) |>
+   slice(1:10) |>
+   data.frame() |>
+   select(c("collocation", "count", "lambda", "z")))
+
+(collout2 <- textstat_collocations(corpus, min_count = 5) |>
+   arrange(-count) |>
+   slice(1:10) |>
+   data.frame() |>
+   select(c("collocation", "count", "lambda", "z")))
+```
+
+## Question 7
+
+```{r}
+## Prepare data function
+##
+## @param book_id: book_id as it would appear in gutenbergr
+## @param removePunct logical specifying whether to remove punctuation
+prepare_dt <- function(book_id, removePunct = TRUE){
+  meta <- gutenberg_works(gutenberg_id  == book_id)
+  meta <- meta %>% mutate(author = unlist(str_split(author, ","))[1] %>% tolower(.))
+  text <- gutenberg_download(book_id) %>%
+                    select(text) %>%
+                    filter(text!="") %>%
+                    unlist() %>%
+                    paste(., collapse = " ") %>% 
+                    str_squish(.) %>%
+                    str_trim(., side = "both")
+  text <- gsub("`|'", "", text) # remove apostrophes
+  text <- gsub("[^[:alpha:]]", " ", text) # remove all non-alpha characters
+  output <- tibble(title = meta$title, author = meta$author, text = text) 
+}
+
+## run function
+novels <- lapply(c(64317, 2489), prepare_dt, removePunct = TRUE) %>% do.call(rbind,.)
+
+## create dfm
+dfm <- tokens(novels$text, remove_punct = T) |>
+  dfm(tolower = T)
+  
+## regression to check if slope is approx -1.0
+regression <- lm(log(topfeatures(dfm, 100)) ~ log(1:100))
+summary(regression)
+confint(regression)
+
+# create plot to illustrate zipf's law
+plot(log(1:100), log(topfeatures(dfm, 100)),
+     xlab="log(rank)", ylab="log(frequency)", main="Top 100 Words")
+abline(regression, col="red")
+abline(a = regression$coefficients["(Intercept)"], b = -1, col = "black")
+```
+
+## Question 8
+
+```{r}
+## Heap's Law
+## M = kT^b
+## where:
+## M = vocab size
+## T = number of tokens
+## k, b are constants
+
+num_tokens <- sum(rowSums(dfm))
+M <- nfeat(dfm)
+k <- 44
+
+## solve for b
+b <- log(M/k)/log(num_tokens)
+print(b)
+```
+
+## Question 9
+
+```{r eval = F}
+corpus <- data_corpus_ukmanifestos 
+
+## key words in context
+corpus_subset(corpus, Party == "Lab") |>
+  tokens(remove_punct = T) |>
+  kwic("nation", window = 5)
+corpus_subset(corpus, Party == "Lab") |>
+  tokens(remove_punct = T) |>
+  kwic("industry", window = 5)
+
+corpus_subset(corpus, Party == "Con") |>
+  tokens(remove_punct = T) |>
+  kwic("nation", window = 5)
+corpus_subset(corpus, Party == "Con") |> 
+  tokens(remove_punct = T) |>
+  kwic("industry", window = 5)
+```
+
+## Question 10
+
+### 10a) 
+```{r}
+
+sotu.sub <- data_corpus_sotu
+sotu.sub$Date <- format(sotu.sub$Date, "%Y")
+names(docvars(sotu.sub))[3] <- "year"
+
+sotu.sub <- sotu.sub |>
+  corpus_subset(year %in% 1982:2020) |>
+  corpus_reshape("sentence")
+
+sotu.df <- cbind(as.character(sotu.sub), docvars(sotu.sub)["year"]) |>
+  setNames(c("text", "year"))
+
+sotu.split <- split(sotu.df, as.factor(sotu.df$year))
+
+boot.fre <- function(year) { # accepts df of texts (year-specific)
+  n <- nrow(year) # number of texts
+  docnums <- sample(1:n, size=n, replace=T) # sample texts WITH replacement
+  docs.boot <- corpus(year[docnums, "text"])
+  docnames(docs.boot) <- 1:length(docs.boot) # something you have to do
+  fre <- textstat_readability(docs.boot, measure = "Flesch") # compute FRE for each
+  return(mean(fre[,"Flesch"])) # return flesch scores only
+}
+
+lapply(sotu.split, boot.fre) # apply to each df of party texts
+
+iter <- 10 # NUMBER OF BOOTSTRAP SAMPLES (usually would want more, >=100)
+
+## for loop to compute as many samples as specified
+for(i in 1:iter) {
+  if(i==1) {boot.means <- list()} # generate new list
+  
+  # store the results in new element i
+  boot.means[[i]] <- lapply(sotu.split, boot.fre) 
+  print(paste("Iteration", i))
+}
+
+## combine the point estimates to a data frame and compute statistics by party
+boot.means.df <- do.call(rbind.data.frame, boot.means)
+mean.boot <- apply(boot.means.df, 2, mean)
+sd.boot <- apply(boot.means.df, 2, sd)
+
+## create data frame for plot
+plot_df <- data.frame(sort(unique(sotu.df$year)), mean.boot, sd.boot) |>
+  setNames(c("year", "mean", "se"))
+
+## confidence intervals
+ci90 <- qnorm(0.95) 
+ci95 <- qnorm(0.975)
+
+## ggplot point estimate + variance
+ggplot(plot_df, aes(colour = year)) + # general setup for plot
+  geom_linerange(aes(x = year, 
+                     ymin = mean - se*ci90, 
+                     ymax = mean + se*ci90), 
+                 lwd = 1, position = position_dodge(width = 1/2)) + # plot 90% interval
+  geom_pointrange(aes(x = year, 
+                      y = mean, 
+                      ymin = mean - se*ci95, 
+                      ymax = mean + se*ci95), 
+                  lwd = 1/2, position = position_dodge(width = 1/2), 
+                  shape = 21, fill = "WHITE") + # plot point estimates and 95% interval
+  coord_flip() + # fancy stuff
+  theme_bw() + # fancy stuff
+  xlab("") + ylab("Mean Flesch Score, by Year") + # fancy stuff
+  theme(legend.position = "none") # fancy stuff
+```
+
+### 10b)
+```{r}
+## mean Flesch statistic by year
+flesch_point <- sotu.df$text %>% 
+  textstat_readability(measure = "Flesch") %>% 
+  group_by(sotu.df$year) %>% 
+  summarise(mean_flesch = mean(Flesch)) %>% 
+  setNames(c("year", "mean")) %>% 
+  arrange(as.numeric(year))
+
+cbind(flesch_point, "bs_mean" = plot_df$mean)
+```
+
+### 10c)
+```{r}
+## calculate the FRE score and the Dale-Chall score.
+fre_and_dc_measures <- textstat_readability(sotu.sub, c("Flesch", "FOG"))
+
+## compute correlations
+readability_cor <- cor(cbind(fre_and_dc_measures$Flesch, fre_and_dc_measures$FOG))
+
+## print
+print(readability_cor[1,2])
+```
+
+## Question 11
+
+```{r}
+docs <- corpus( readtext(paste0(c("melania", "michelle"), ".txt")) )
+
+## set gap to default (-1)
+sw2 <- smith_waterman(as.character(docs)[1], as.character(docs)[2], 
+                      type="words", gap=-1)
+
+## increase gap penalty to -5 --> reduces extent of plagiarism. Why?
+sw3 <- smith_waterman(as.character(docs)[1], as.character(docs)[2], 
+                      type="words", gap=-5)
+
+
+print(sw2$sw)
+print(sw3$sw)
+```
+
