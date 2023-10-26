@@ -15,7 +15,7 @@
 
 
 ## working directory
-setwd("/Users/christianbaehr/Documents/GitHub/POL504_precept_2023//data/")
+setwd("/Users/christianbaehr/Documents/GitHub/POL504_precept_2023/data/")
 
 ## package dependencies
 pacman::p_load(dplyr, glmnet, quanteda, ROCR, caret)
