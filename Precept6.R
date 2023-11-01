@@ -107,7 +107,7 @@ extract.coef <- function(term) {
   return(beta)
 }
 
-
+extract.coef("dino")
 
 
 #######################################
@@ -122,7 +122,38 @@ extract.coef <- function(term) {
 ## HINT: FP Rate = FP / (FP+TN)
 ##       TP Rate = TP / (TP+FN)
 
+pred.ridge
+y.test
 
+threshold <- 0.2
+
+fp <- sum((pred.ridge > 0.2) & y.test==0)
+tp <- sum((pred.ridge > 0.2) & y.test==1)
+
+fn <- sum((pred.ridge <= 0.2) & y.test==1)
+tn <- sum((pred.ridge <= 0.2) & y.test==0)
+
+fp.rate <- fp / (fp+tn)
+tp.rate <- tp / (tp+fn)
+
+roc <- function(threshold) {
+  fp <- sum((pred.ridge > threshold) & y.test==0)
+  tp <- sum((pred.ridge > threshold) & y.test==1)
+  
+  fn <- sum((pred.ridge <= threshold) & y.test==1)
+  tn <- sum((pred.ridge <= threshold) & y.test==0)
+  
+  fp.rate <- fp / (fp+tn)
+  tp.rate <- tp / (tp+fn)
+  return(c( fp.rate, tp.rate ))
+}
+
+rates <- seq(0.1, 1, 0.1)
+
+roc.data <- sapply(rates, roc)
+roc.data <- t(roc.data)
+
+plot(roc.data)
 
 #######################################
 
