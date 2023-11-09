@@ -1,0 +1,105 @@
+---
+title: "Some Background on Tree Models"
+author: "Elisa Wirsching"
+date: "March 23, 2023"
+output: 
+  github_document:
+    toc: true
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# What Problem are We Trying to Solve?
+
+- split data in smaller and smaller groups based on predictors, attempting to make
+each as “homogenous” in $Y$ as possible
+- idea: partition the space of predictors into $(R_1, ..., R_j)$ non-overlapping sets (similar to
+binning)
+
+# Recursive Binary Splitting
+
+- How do we construct regions $R_1, ..., R_j$?
+- Goal is to find boxes $R_1, ..., R_j$ that minimize loss function, e.g. RSS:
+  \begin{align}
+  \sum_{j=1}^J \sum_{i \in R_j} (y_i-\hat{y}_{R_j})^2
+  \end{align}
+- But it is impossible to check all partition into $J$ boxes
+- We therefore use recursive binary splitting:
+  - Split predictor space on one dimension into two sets
+  - Split each of the resulting resulting sets into two sets again
+  - Repeat until you have only a small number of observations left in each of the terminal sets
+- This algorithm is top down and greedy: best split is made at that particular step, rather than looking ahead and ensure better split in some future step
+
+# Example of Regression Tree
+
+![Regression Tree](tree1.png)
+
+![Prediction Surface](tree2.png)
+
+# Example of Classification Tree
+
+![Classification Tree](tree3.png)
+
+
+- $\hat{y}_{R_m}$ can no longer be the average outcome in a region $R_m$ \pause $\to$ most frequent outome category for the observations in set $R_m$ \pause
+- RSS can no longer be used as a criterion for making binary splits \pause 
+  - Classification error: $1 - \max_k (\hat{p}_{mk})$; ${p}_{mk}$ is proportion of observations in $R_m$ that are from class $k$ $\to$ fraction of training observations that do not belong to most common class;  \pause
+  - Gini index: $\sum_{k=1}^K \hat{p}_{mk} (1- \hat{p}_{mk})$; measure of total variance across $K$ classes $\to$ measure of _node purity_ (small value indicates that node contains predominantly observations from a single class) \pause
+  - Entropy: $- \sum_{k=1}^K \hat{p}_{mk}\log \hat{p}_{mk}$
+
+
+# Tree Pruning
+
+- Problem of a simple tree: Complex trees lead to low bias, but high variance of predictions and worse interpretability 
+- We can prune large trees: Penalize tree complexity (conditional optimization)
+  - $\sum_{m=1}^{|T|} \sum_{i:x_i \in R_m} (y_i - \hat{y}_{R_m})^2 + \alpha |T|$
+
+
+# Bagging
+
+- The problem with simple (though pruned) tree is: sensitivity to small perturbations in the data which lead to huge differences in predictions $\to$ high variance
+- Bagging combines predictions from multiple regression trees to reduce variance of
+predictions
+- Description of algorithm
+  - Take a bootstrap sample $b = 1, ...,B$ from training set (with replacement)
+  - Estimate a deep regression tree for sample $b$ (without pruning)
+  - Estimate prediction $\hat{g}^b(\mathbf{x})$ for that tree  \pause
+  - Calculate ensemble prediction
+  \begin{align}
+  \hat{g}(\mathbf{x}) = \sum_{b=1}^B \hat{g}^b(\mathbf{x}) / B
+  \end{align} 
+- Averaging over a large number of high-variance low-bias trees results in lower-variance bag of trees
+
+## Random Forest
+
+- Cool, but we can do even better! Why? \pause
+  - Each tree is too similar $\to$ induces correlation btw trees and thus higher variance \pause
+  - Bagging is computationally complex \pause
+- Random Forest
+  - Take a bootstrap sample $b = 1, ..., B$ from training set (with replacement) \pause
+  - Build regression tree by randomly selecting $m<p$ predictors (usually $m \approx \sqrt{p}$) \pause
+  - Estimate prediction $\hat{g}^b(\mathbf{x})$ for that tree \pause
+  - Calculate _ensemble_ prediction
+  \begin{align}
+  \hat{g}(\mathbf{x}) = \sum_{b=1}^B \hat{g}^b(\mathbf{x}) / B
+  \end{align}
+
+## Boosting
+
+- Ensemble methods combine multiple models
+- Parallel ensembles
+  - each model is built independently
+  - e.g. bagging and random forest
+  - main idea: combine many (high complexity, low bias) models to reduce variance
+- Sequential ensembles
+  - models are generated sequentially
+  - try to add new models that do well where previous models lacked
+  - instead of bootstrapping the data, we fit a tree using the current residuals rather than outcome $Y$
+  
+  
+  
+  
+These examples and explanations are inspired by [James et al. 2017, An Introduction to Statistical Learning with Applications in R](https://www.statlearning.com/).
+

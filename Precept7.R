@@ -33,10 +33,12 @@ pacman::p_load(dplyr, glmnet, quanteda, caret, randomForest, mlbench, pbapply,
 ## I am providing you with two-dimensional data on the ideological positions
 ## of Republican and Democratic politicians, called "pols".
 
+set.seed(123)
+
 generate <- function() {
-  party <- sample(c("D", "R"), 100, replace=T)
-  immigration <- rnorm(100, ifelse(party=="D", 0.1, 0.9), 0.3)
-  trade <- rnorm(100, ifelse(party=="D", 0.4, 0.8), 0.3)
+  party <- sample(c("D", "R"), 10, replace=T)
+  immigration <- rnorm(10, ifelse(party=="D", 0.1, 0.9), 0.3)
+  trade <- rnorm(10, ifelse(party=="D", 0.4, 0.8), 0.3)
   return(data.frame(party, immigration, trade))
 }
 
@@ -49,16 +51,57 @@ plot(pols$immigration, pols$trade, col=ifelse(pols$party=="D", "blue", "red"), p
 ## party by identifying the three senators closest to the freshman, by Euclidean distance.
 freshman <- c(0.40, 0.58)
 
+pols$distances <- sqrt( (freshman[1] - pols$immigration)^2 + (freshman[2] - pols$trade)^2 )
 
+three_smallest <- sort(distances)[1:3]
+
+pols[pols$distances %in% three_smallest, ]
 
 ## The U.S. government has experienced a revolution of love. All 100 senators are
 ## now freshmen. Functionalize your previous code and predict the party of each
 ## new freshman senator separately based on their distance to the nearest 3, 5, 
 ## and 7 senators, and report the error rate for each.
 
-freshmen <- data.frame(party=sample(c("D", "R"), 100, replace=T), 
-                       immigration=rnorm(100, 0.5, 0.3),
-                       trade=rnorm(100, 0.6, 0.3))
+# freshmen <- data.frame(party=sample(c("D", "R"), 100, replace=T), 
+#                        immigration=rnorm(100, 0.5, 1),
+#                        trade=rnorm(100, 0.6, 1))
+freshmen <- generate()
+
+nearest.neighbor <- function(x1, x2, k=3) {
+  
+  pols$distances <- sqrt( (x1 - pols$immigration)^2 + (x2 - pols$trade)^2 )
+  
+  k_smallest <- sort(pols$distances)[1:k]
+  
+  parties <- pols$party[pols$distances %in% k_smallest]
+  
+  predicted_party <- ifelse(mean(parties=="D")>0.5, "D", "R")
+  
+  return(predicted_party)
+  
+}
+
+
+nearest.neighbor(freshmen$immigration[1], freshmen$trade[1])
+
+k_3 <- apply(freshmen[, c("immigration", "trade")], MARGIN = 1, FUN = function(x) nearest.neighbor( x[1], x[2]))
+table(results)
+
+mean(k_3 == freshmen$party)
+
+k.candidates <- c(3, 5, 7)
+
+test_k <- function(k) {
+  k_prediction <- apply(freshmen[, c("immigration", "trade")], MARGIN = 1, FUN = function(x) nearest.neighbor( x[1], x[2], k=k))
+  
+  correctness <- mean(k_prediction == freshmen$party)
+  
+  return( correctness )
+  
+}
+
+sapply(k.candidates, FUN = function(x) test_k(x))
+#test_k(k.candidates[2])
 
 
 #######################################
