@@ -31,7 +31,7 @@ set.seed(1234)
 news_samp <- news_data %>% 
   filter(category %in% c("MONEY", "LATINO VOICES")) %>% 
   group_by(category) %>%
-  sample_n(500) %>%  # sample 250 of each to reduce computation time
+  sample_n(500) %>%  # sample 500 of each to reduce computation time
   ungroup() %>%
   select(headline, category) %>% 
   setNames(c("text", "class"))
@@ -93,6 +93,8 @@ rf.base <- randomForest(x = train_x,
 ## 2) how does it improve "purity" of nodes?
 token_importance <- round(importance(rf.base, 2), 2)
 head(rownames(token_importance)[order(-token_importance)])
+
+
 
 ## print results
 print(rf.base)
