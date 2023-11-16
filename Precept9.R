@@ -52,7 +52,7 @@ SOTU_mat_normal <- scale(SOTU_mat)
 SOTU_pca <- prcomp(SOTU_mat_normal)
 
 ## we can also normalize through the function
-SOTU_pca <- prcomp(SOTU_mat_normal, center = T, scale. = T)
+#SOTU_pca <- prcomp(SOTU_mat, center = T, scale. = T)
 
 
 ## visualize the variance contribution of each component
@@ -73,6 +73,13 @@ dim(SOTU_pca$rotation)
 
 ## a) What are the 10 most important terms for PC1?
 ## b) What should the correlation be between the first two components?
+
+View(SOTU_pca$rotation)
+
+sort(abs(SOTU_pca$rotation[ , 1]))[1:10]
+
+cor(SOTU_pca$rotation[ , 1], SOTU_pca$rotation[ , 2])
+
 
 #######################################
 
