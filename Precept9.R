@@ -10,7 +10,7 @@
 ## - Principal Components Analysis
 ## - Latent Semantic Analysis
 
-################################################# Precept 9: Unsupervised Supervised Text Analysis I
+################################################# Precept 9: Unsupervised Text Analysis I
 
 
 ## working directory
