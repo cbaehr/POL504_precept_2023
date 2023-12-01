@@ -194,11 +194,11 @@ blm_topics %>% filter(term=="#freddiegray")
 blm_topics %>% filter(term=="#sandrabland")
 
 ## Combine data
-top2 <- data.frame(top_topic = max, date = ymd(blm_tweets_sum$date)) %>% 
+top1 <- data.frame(top_topic = max, date = ymd(blm_tweets_sum$date)) %>% 
   filter(date < as.Date("2016-01-01"))
 
 ## Plot top topic per day
-ggplot(top2, aes(x=date, y=top_topic, pch="First")) + theme_bw() + 
+ggplot(top1, aes(x=date, y=top_topic, pch="First")) + theme_bw() + 
   ylab("Topic Number") + ggtitle("BLM-Related Tweets from 2014 to 2016 over Topics") + geom_point() + xlab(NULL) + 
   geom_vline(xintercept=as.numeric(shootings[1]), color = "blue", linetype=4) + # Freddie Gray (Topic)
   geom_vline(xintercept=as.numeric(shootings[2]), color = "black", linetype=4)  + # Sandra Bland
