@@ -183,7 +183,7 @@ RM_wv <- model1['(Intercept)',] + model1['party_R',] + model1['gender_M',] # (R)
 ## nearest neighbors
 nns(rbind(DF_wv,DM_wv), N = 10, pre_trained = glove, candidates = model1@features)
 
-
+nns(rbind(DF_wv,RM_wv), N = 10, pre_trained = glove, candidates = model1@features)
 
 ## model with interaction also possible, but need to calculate interaction ourselves
 model2 <- conText(formula = immigration ~ party_dem + gender_female + interaction,
